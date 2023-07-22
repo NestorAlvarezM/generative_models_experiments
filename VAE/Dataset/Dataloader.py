@@ -33,6 +33,9 @@ class CustomImageDataset(Dataset):
         return image
 
 if __name__=='__main__':
+    # run main to test that 
+
+
     # now use it as the replacement of transforms.Pad class
     transform_view=transforms.Compose([
         transforms.CenterCrop(224),
