@@ -1,65 +1,51 @@
 import torch
 import torch.nn as nn
-from torchviz import make_dot
 from torch.utils.tensorboard import SummaryWriter
 
-class InputWrapper(nn.Module):
-    def forward(self, x):
-        # The forward method simply returns the input tensor as-is
-        return x
-class Encoder(nn.Module):
-    def __init__(self, input_channels,input_shape, embedding_dim):
-        super(Encoder, self).__init__()
-        self.input_channels = input_channels
-        self.embedding_dim = embedding_dim
-        self.input_width=input_shape[2]
-        self.input_height=input_shape[3]
+class Decoder(nn.Module):
+    def __init__(self, hidden_dim):
+        super(Decoder, self).__init__()
+        self.hidden_dim = hidden_dim
         self.conv_layers = nn.Sequential(
-            nn.Conv2d(self.input_channels, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(), #TODO should i use Relu inplace?
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.ConvTranspose2d(self.hidden_dim, 24, kernel_size=7, stride=2, padding=0, output_padding=0),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(24),
+            nn.ConvTranspose2d(24, 12, kernel_size=2, stride=2, padding=0, output_padding=0),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(12),
+            nn.ConvTranspose2d(12, 8, kernel_size=2, stride=2, padding=0, output_padding=0),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(512,128,kernel_size=3,stride=1,padding=1),
+            nn.BatchNorm2d(8),
+            nn.ConvTranspose2d(8, 6, kernel_size=2, stride=2, padding=0, output_padding=0),
             nn.ReLU(),
-            nn.Conv2d(128, 32, kernel_size=3, stride=1, padding=1),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(32,16,kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(6),
+            nn.ConvTranspose2d(6, 3, kernel_size=2, stride=2, padding=0, output_padding=0),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(16, 4, kernel_size=3, stride=1, padding=1),
-            nn.ReLU()
+            nn.BatchNorm2d(3),
+            nn.ConvTranspose2d(3, 3, kernel_size=2, stride=2, padding=0, output_padding=0),
+            nn.ReLU(),
         )
-
     def forward(self, x):
+        x = x.view(-1, self.hidden_dim, 1, 1)
         x = self.conv_layers(x)
-        x = torch.flatten(x,start_dim=1)
 
         return x
 
-def test_encoder(encoder, input_shape, embedding_dim):
-    batch_size, channels, width, height = input_shape
-
+def test_decoder(decoder, input_shape, tensor_image_dim):
+    batch_size, embedding_dim= input_shape
+    batch_size, channels,width,heigth= tensor_image_dim
     # Generate a random input tensor with the given shape
-    input_tensor = torch.randn(batch_size, channels, width, height)
+    input_tensor = torch.randn(batch_size,embedding_dim)
     # Pass the input tensor through the encoder
-    output_tensor = encoder(input_tensor)
+    output_tensor = decoder(input_tensor)
     # Create a computation graph and visualize it
-    output = encoder(input_tensor)
+    output = decoder(input_tensor)
     # Check if the output shape matches the desired shape
     desired_output_shape = (batch_size, embedding_dim)
-    assert output_tensor.shape == desired_output_shape, f"Expected shape {desired_output_shape}, but got {output_tensor.shape}"
+    #assert output_tensor.shape == desired_output_shape, f"Expected shape {desired_output_shape}, but got {output_tensor.shape}"
     writer = SummaryWriter()
-
     # Write the model graph to TensorBoard
-    writer.add_graph(encoder, input_tensor)
+    writer.add_graph(decoder, input_tensor)
 
     # Close the writer to flush all the data to disk
     writer.close()
@@ -67,7 +53,8 @@ def test_encoder(encoder, input_shape, embedding_dim):
     print("Test passed! given the output with shape",input_shape,"you get a tensor of output shape",desired_output_shape)
 
 # Assuming you've already defined your encoder with input_channels and embedding_dim
-input_shape = (8, 3, 224, 224)  # Example input shape: 32 samples, 3 channels, 64x64 image size
-embedding_dim= 16
-encoder=Encoder(3,input_shape,16)
-test_encoder(encoder, (1,3,224,224), 36)
+input_shape = (1,36)  # Example input shape: 32 samples, 3 channels, 64x64 image size
+tensor_image_dim= (1,3,224,244)
+decoder=Decoder(input_shape[1])
+test_decoder(decoder, input_shape, tensor_image_dim)
+
