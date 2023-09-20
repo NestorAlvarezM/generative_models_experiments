@@ -12,8 +12,6 @@ def plot_left_right_grid(x_left_list, y_left_list, x_right_list, y_right_list):
     - y_right_list: List of data for right plots.
     """
     nrows = max(len(x_left_list),len(x_right_list))
-    # Create subplots with a 3x3 grid layout
-    #sharex mismo eje x
     fig, axes = plt.subplots(nrows=nrows, ncols=3, figsize=(12, 8), sharex=True)
 
     # Plot the left plots in positions [0,0], [1,0], [2,0]
@@ -44,8 +42,7 @@ if __name__ == "__main__":
     # Sample data
     x_left_list = [np.linspace(0, 10, 100)] * 5  # List of X-axis data for left plots
     y_left_list = [np.sin(x_left_list[0])] * 5  # List of data for left plots
-    x_right_list = [np.linspace(0, 8, 100), np.linspace(0, 6, 100), np.linspace(0, 4, 100)]  # List of X-axis data for right plots
-    y_right_list = [np.cos(x_right_list[0]), np.cos(x_right_list[1]), np.cos(x_right_list[2])]  # List of data for right plots
-
+    x_right_list = [np.linspace(0, 8, 100)] * 5  # List of X-axis data for right plots
+    y_right_list = [np.cos(x_right_list[0])] * 5   # List of data for right plots
     # Call the function to plot the grid
     plot_left_right_grid(x_left_list, y_left_list, x_right_list, y_right_list)
